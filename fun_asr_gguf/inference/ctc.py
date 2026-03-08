@@ -147,7 +147,6 @@ class CTCDecoder:
         t0 = time.perf_counter()
         topk_log_probs, topk_indices = self._infer(enc_output)
         t_stats["infer"] = time.perf_counter() - t0
-        print(f"    [CTC] 1. Infer: {t_stats['infer']*1000:.2f}ms")
         
         # ---- 阶段 2: 贪婪解码 (Top-1) ----
         t0 = time.perf_counter()
@@ -155,23 +154,17 @@ class CTCDecoder:
         top1_indices = indices_2d[:, 0]     # [T]
         ctc_text, ctc_results = self._greedy_decode(top1_indices)
         t_stats["decode"] = time.perf_counter() - t0
-        print(f"    [CTC] 2. Decode: {t_stats['decode']*1000:.2f}ms | Text: '{ctc_text}'")
         
         # ---- 阶段 3: 雷达扫描 (Top-K 空间) ----
         t0 = time.perf_counter()
         topk_probs = np.exp(topk_log_probs[0])
         detected_hotwords = self._radar_scan(indices_2d, topk_probs, top1_indices, top_k=top_k)
         t_stats["radar"] = time.perf_counter() - t0
-        if detected_hotwords:
-            # 增加时间轴回显，方便排查误触发
-            radar_info = [f"{h['text']}({h['start']:.1f}s)" for h in detected_hotwords]
-            print(f"    [CTC] 3. Radar: {t_stats['radar']*1000:.2f}ms | Detected: {radar_info}")
         
         # ---- 阶段 4: 整合 (Greedy + 热词 → 替换) ----
         t0 = time.perf_counter()
         if detected_hotwords and ctc_results:
             ctc_text, ctc_results = self._integrate(ctc_results, detected_hotwords)
-            print(f"    [CTC] 4. Integrate: {t_stats['integrate']*1000:.2f}ms | {''.join([r.text for r in ctc_results])}")
         t_stats["integrate"] = time.perf_counter() - t0
         
         # ---- 阶段 5: 拼音纠错 (补充热词) ----
@@ -181,8 +174,6 @@ class CTCDecoder:
             corrected_text, extra_hotwords = self._correct(ctc_text, max_hotwords)
             hotwords = list(set(hotwords) | set(extra_hotwords))
             t_stats["hotword"] = time.perf_counter() - t0
-            if extra_hotwords:
-                print(f"    [CTC] 5. Corrector: {t_stats['hotword']*1000:.2f}ms | Extra: {extra_hotwords}")
         else:
             t_stats["hotword"] = time.perf_counter() - t0
             
