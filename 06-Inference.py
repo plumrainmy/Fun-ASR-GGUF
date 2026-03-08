@@ -35,8 +35,8 @@ json_output = False
 
 # 模型文件路径
 model_dir = "./model"
-encoder_onnx_path = f"{model_dir}/Fun-ASR-Nano-Encoder-Adaptor.int4.onnx"
-ctc_onnx_path = f"{model_dir}/Fun-ASR-Nano-CTC.int4.onnx"
+encoder_onnx_path = f"{model_dir}/Fun-ASR-Nano-Encoder-Adaptor.fp16.onnx"
+ctc_onnx_path = f"{model_dir}/Fun-ASR-Nano-CTC.fp16.onnx"
 decoder_gguf_path = f"{model_dir}/Fun-ASR-Nano-Decoder.q5_k.gguf"
 tokens_path = f"{model_dir}/tokens.txt"
 hotwords_path = "./hot.txt"  # 可选，留空则不使用热词
@@ -73,6 +73,8 @@ def main():
         max_hotwords=10, 
         enable_ctc=enable_ctc,
         verbose=verbose,
+        dml_enable = True, 
+        pad_to = 30, 
     )
 
     print(f'\n预跑一遍，分配内存......\n')
@@ -92,7 +94,7 @@ def main():
         segment_size=60.0,
         overlap=4.0,
         start_second=0.0,
-        duration=60.0,
+        duration=30.0,
         srt=True, 
         temperature=0.4
     )
