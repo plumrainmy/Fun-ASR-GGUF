@@ -1,23 +1,104 @@
-from fun_asr_gguf import create_asr_engine
+from fun_asr_gguf import FunASREngine, ASREngineConfig
 import requests
 import json
 import os
 
 
-def asr_voice(wav_path):
-    # 创建并初始化引擎 (推荐使用单例或长期持有实例)
-    engine = create_asr_engine(
-        encoder_onnx_path="model/Fun-ASR-Nano-Encoder-Adaptor.int4.onnx",
-        ctc_onnx_path="model/Fun-ASR-Nano-CTC.int4.onnx",
-        decoder_gguf_path="model/Fun-ASR-Nano-Decoder.q5_k.gguf",
-        tokens_path="model/tokens.txt",
-        hotwords_path="hot.txt",  # 可选：热词文件路径，支持运行期间实时修改
-        similar_threshold=0.6,  # 可选：热词模糊匹配阈值，默认 0.6
-        max_hotwords=10,  # 可选：最多提供给 LLM 的热词数量，默认 10
+def asr_voice(audio_file):
+    # ==================== 配置区域 ====================
+
+    # 音频文件路径
+    # audio_file = "input.mp3"
+
+    # 语言设置（None=自动检测, "中文", "英文", "日文" 等）
+    language = None
+
+    # 上下文信息（留空则不使用）
+    context = "这是1004期睡前消息节目，主持人叫督工，助理叫静静"
+
+    # 是否启用 CTC 辅助（True=提供时间戳和热词, False=仅LLM）
+    enable_ctc = True
+
+    # 是否打印详细信息
+    verbose = True
+
+    # 是否以 JSON 格式输出结果
+    json_output = False
+
+    # 模型文件路径
+    model_dir = "./model"
+    encoder_onnx_path = f"{model_dir}/Fun-ASR-Nano-Encoder-Adaptor.fp16.onnx"
+    ctc_onnx_path = f"{model_dir}/Fun-ASR-Nano-CTC.fp16.onnx"
+    decoder_gguf_path = f"{model_dir}/Fun-ASR-Nano-Decoder.q5_k.gguf"
+    tokens_path = f"{model_dir}/tokens.txt"
+    hotwords_path = "./hot.txt"  # 可选，留空则不使用热词
+
+    # ==================== 语言说明 ====================
+
+    """
+    Fun-ASR-Nano-2512
+        中文、英文、日文
+
+    Fun-ASR-MLT-Nano-2512
+        中文、英文、粤语、日文、韩文、越南语、印尼语、泰语、马来语、菲律宾语、阿拉伯语、
+        印地语、保加利亚语、克罗地亚语、捷克语、丹麦语、荷兰语、爱沙尼亚语、芬兰语、希腊语、
+        匈牙利语、爱尔兰语、拉脱维亚语、立陶宛语、马耳他语、波兰语、葡萄牙语、罗马尼亚语、
+        斯洛伐克语、斯洛文尼亚语、瑞典语 
+    """
+
+    # ==================== 执行区域 ====================
+
+    # 准备热词
+    hotwords = []
+    if hotwords_path and os.path.exists(hotwords_path):
+        with open(hotwords_path, "r", encoding="utf-8") as f:
+            hotwords = [line.strip() for line in f if line.strip() and not line.strip().startswith("#")]
+
+    config = ASREngineConfig(
+        encoder_onnx_path=encoder_onnx_path,
+        ctc_onnx_path=ctc_onnx_path,
+        decoder_gguf_path=decoder_gguf_path,
+        tokens_path=tokens_path,
+        hotwords=hotwords,
+        similar_threshold=0.6,
+        max_hotwords=10,
+        enable_ctc=enable_ctc,
+        onnx_provider='cuda',
+        verbose=verbose,
     )
-    engine.initialize()
-    result = engine.transcribe(wav_path, language="中文")
-    print(result.text)
+    engine = FunASREngine(config)
+
+    print(f'\n预跑一遍，分配内存......\n')
+    result = engine.transcribe(
+        audio_file,
+        language=language,
+        context=context,
+        verbose=False,
+        duration=5.0,
+    )
+    result = engine.transcribe(
+        audio_file,
+        language=language,
+        context=context,
+        verbose=verbose,
+        segment_size=60.0,
+        overlap=4.0,
+        start_second=0.0,
+        duration=60.0,
+        srt=True,
+        temperature=0.4
+    )
+
+    # 输出结果
+    if json_output:
+        import json
+        print("\n" + "="*70)
+        print("识别结果 (JSON)")
+        print("="*70)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+
+    # 清理资源
+    engine.cleanup()
     return result.segments
 
 
