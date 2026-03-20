@@ -1,13 +1,13 @@
 # ==================== 推理依赖====================
 
-onnx 
+pip
 onnxruntime 
 scipy
 numpy 
 pydub 
-gguf
+pip
 
-rich
+pip
 watchdog
 pypinyin
 srt
@@ -17,9 +17,9 @@ srt
 torch 
 torchaudio 
 transformers 
-onnxruntime 
+onnxruntime pip
 onnxscript
-sentencepiece
+p
 modelscope
 
 # ==================== 注意事项 ====================
