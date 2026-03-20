@@ -16,7 +16,7 @@ from fun_asr_gguf import FunASREngine, ASREngineConfig
 # ==================== 配置区域 ====================
 
 # 音频文件路径
-audio_file = "input.mp3"
+audio_file = "./wav/fc7ef3c2-602a-4514-9624-eea450f37445_out.mp3"
 
 # 语言设置（None=自动检测, "中文", "英文", "日文" 等）
 language = None
