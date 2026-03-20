@@ -64,8 +64,9 @@ def get_voice_time(voiceUrl):
     voiceTime = response.json()
     print(response.json())
     return voiceTime
-def download_file(voiceUrl_out, wav_path):
 
+
+def download_file(voiceUrl_out, wav_path):
     # 下载voiceUrl文件到 ./wav 目录下
     print(f"正在下载：{voiceUrl_out}")
     with requests.get(voiceUrl_out, stream=True) as r:
