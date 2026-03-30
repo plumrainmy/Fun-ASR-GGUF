@@ -83,8 +83,6 @@ def asr_voice(audio_file):
         verbose=verbose,
         segment_size=60.0,
         overlap=4.0,
-        start_second=0.0,
-        duration=60.0,
         srt=True,
         temperature=0.4
     )
@@ -99,6 +97,7 @@ def asr_voice(audio_file):
 
     # 清理资源
     engine.cleanup()
+    print(result)
     return result.segments
 
 
@@ -110,8 +109,8 @@ def merge_content(voiceTime, timestamps):
         speaker = i["speaker"]
         content = ""
         for j in timestamps:
-            if start <= j["start"] <= end:
-                content = content + j["char"]
+            if start <= j[1] <= end:
+                content = content + j[0]
         if "陌生人" in speaker:
             speaker = "陌生人"
         speaker_content.append({"speaker": speaker, "content": content})
@@ -159,8 +158,8 @@ def download_file(voiceUrl_out, wav_path):
 
 
 def main():
-    voiceUrl = "https://file.meibaokeji.com/media/tools/cr/2026/03/05/52753757821/2026/03/05/fc7ef3c2-602a-4514-9624-eea450f37445.mp3"
-    voiceUrl_out = "https://file.meibaokeji.com/media/tools/cr/2026/03/05/52753757821/2026/03/05/fc7ef3c2-602a-4514-9624-eea450f37445_out.mp3"
+    voiceUrl = "https://file.meibaokeji.com/media/tools/cr/2026/03/11/52753757821/2026/03/11/13f61124-c748-4066-961a-9903161259af.mp3"
+    voiceUrl_out = "https://file.meibaokeji.com/media/tools/cr/2026/03/11/52753757821/2026/03/11/13f61124-c748-4066-961a-9903161259af_out.mp3"
     wav_dir = "./wav"
     os.makedirs(wav_dir, exist_ok=True)
     # 从 URL 提取文件名
